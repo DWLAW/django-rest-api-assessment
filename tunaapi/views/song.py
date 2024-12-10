@@ -2,7 +2,7 @@ from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
-from tunaapi.models import Song, Artist
+from tunaapi.models import Song, Artist, Genre
 
 class SongView(ViewSet):
   
@@ -14,7 +14,7 @@ class SongView(ViewSet):
         """
     
     song = Song.objects.get(pk=pk)
-    serializer = SongSerializer(song)
+    serializer = SingleSongSerializer(song)
     return Response(serializer.data)
   
   def list(self, request):
@@ -33,7 +33,7 @@ class SongView(ViewSet):
         Returns
         Response -- JSON serialized song instance
         """
-        artist_id = Artist.objects.get(pk=request.data["artist"])
+        artist_id = Artist.objects.get(pk=request.data["artist_id"])
         
         song = Song.objects.create(
             title=request.data["title"],
@@ -50,7 +50,7 @@ class SongView(ViewSet):
     Returns:
         Response -- Empty body with 204 status code
     """
-    artist_id = Artist.objects.get(pk=request.data["artist"])
+    artist_id = Artist.objects.get(pk=request.data["artist_id"])
 
     song = Song.objects.get(pk=pk)
     song.title = request.data["title"]
@@ -74,4 +74,12 @@ class SongSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Song
-        fields = ('id', 'title', 'artist_id', 'album', 'length')
+        fields = ('id', 'artist_id', 'title', 'album', 'length')
+
+class SingleSongSerializer(serializers.ModelSerializer):
+    """JSON serializer for song types
+    """
+    class Meta:
+        model = Song
+        fields = ('id', 'artist_id', 'title', 'album', 'length', 'genres')
+        depth = 2

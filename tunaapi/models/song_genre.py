@@ -2,6 +2,6 @@ from django.db import models
 from .song import Song
 from .genre import Genre
 
-class Song_genre(models.Model):
-    song_id = models.ForeignKey(Song, on_delete=models.CASCADE)
-    genre_id = models.ForeignKey(Genre, on_delete=models.CASCADE)
+class SongGenre(models.Model):
+    song_id = models.ForeignKey(Song, on_delete=models.CASCADE,related_name='genres' )
+    genre_id = models.ForeignKey(Genre, on_delete=models.CASCADE,related_name='genre_songs')
