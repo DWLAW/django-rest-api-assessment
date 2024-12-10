@@ -3,7 +3,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from django.db.models import Count
-from tunaapi.models import Artist
+from tunaapi.models import Artist, Song
 
 class ArtistView(ViewSet):
   
@@ -13,9 +13,15 @@ class ArtistView(ViewSet):
         Returns:
             Response -- JSON serialized artist
         """
-    artist = Artist.objects.get(pk=pk)
-    serializer = SingleArtistSerializer(artist)
-    return Response(serializer.data)
+    try:    
+        artist = Artist.objects.get(pk=pk)
+        song_count = Song.objects.filter(artist=artist).count()
+        artist.song_count = song_count
+        serializer = SingleArtistSerializer(artist)
+        return Response(serializer.data)
+    except Artist.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
   
   def list(self, request):
         """Handle GET requests to get all artists 
@@ -39,7 +45,7 @@ class ArtistView(ViewSet):
             bio=request.data["bio"],
         )
         serializer = ArtistSerializer(artist)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
   def update(self, request, pk):
     """Handle PUT requests for an artist
@@ -53,8 +59,9 @@ class ArtistView(ViewSet):
     artist.age = request.data["age"]
     artist.bio = request.data["bio"]
     artist.save()
-
-    return Response(None, status=status.HTTP_204_NO_CONTENT)
+    
+    serializer = ArtistSerializer(artist)
+    return Response(serializer.data, status=status.HTTP_200_OK)
   
   
   def destroy(self, request, pk):
@@ -72,9 +79,10 @@ class ArtistSerializer(serializers.ModelSerializer):
         model = Artist
         fields = ('id', 'name', 'age', 'bio', 'song_count',)
 class SingleArtistSerializer(serializers.ModelSerializer):
-    song_count = serializers.IntegerField(default=None)
+    
     """JSON serializer for artist types
     """
+    song_count = serializers.IntegerField(default=None)
     class Meta:
         model = Artist
         fields = ('id', 'name', 'age', 'bio', 'song_count', 'songs')
